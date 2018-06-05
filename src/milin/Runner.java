@@ -1,6 +1,8 @@
 package milin;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 public class Runner {
@@ -99,6 +101,26 @@ public class Runner {
         }));
   }
 
+  private static CompletableFuture<Integer> runAsyncBlockingWithExecutor() {
+    final ExecutorService executor = Executors.newFixedThreadPool(4);
+
+
+    final CompletableFuture<Integer> task1 =
+        CompletableFuture.supplyAsync(supplierBlockingTask1(1));
+
+    return task1.thenComposeAsync(i1 -> {
+      Log.log("blockingTask1 finished");
+      return blockingTask2(i1).thenCombineAsync(blockingTask3(i1), (i2, i3) -> {
+        Log.log("blockingTask2,3 finished");
+        return i2 + i3;
+      }, executor);
+    }, executor)
+        .thenComposeAsync(i4 -> blockingTask4(i4).thenApply(i5 -> {
+          Log.log("blockingTask4 finished");
+          return i5;
+        }), executor);
+  }
+
   private static CompletableFuture<Integer> runAsyncBlockingSupplyAsync() {
     final CompletableFuture<Integer> task1 =
         CompletableFuture.supplyAsync(supplierBlockingTask1(1));
@@ -176,16 +198,24 @@ public class Runner {
 
   public static void main(String[] args) throws Exception {
 
+    // doing things using the thenAsync methods does not imply that things are running in parallell
+    // it only means that the result will be handled by another thread
+
+    /*
     timeComplete(Runner::runSyncBlocking, "runSyncBlocking");
 
     timeComplete(Runner::runAsyncBlocking, "runAsyncBlocking");
+
+
+    timeComplete(Runner::runAsyncBlockingSupplyAsync, "runAsyncBlockingSupplyAsync");
+
+*/
 
     timeComplete(Runner::runAsyncBlockingSupplyAsync, "runAsyncBlockingSupplyAsync");
 
     timeComplete(Runner::runSyncBlockingSupplyAsync, "runSyncBlockingSupplyAsync");
 
     timeComplete(Runner::runAsyncNonblocking, "runAsyncNonblocking");
-
 
     System.exit(1);
   }
