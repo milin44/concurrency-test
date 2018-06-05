@@ -199,8 +199,10 @@ public class Runner {
   public static void main(String[] args) throws Exception {
 
     // doing things using the thenAsync methods does not imply that things are running in parallell
-    // it only means that the result will be handled by another thread
+    // it only means that the result of the following operation will be handled by another thread
+    // which might be good if you are doing an expensive network call.
 
+    
     /*
     timeComplete(Runner::runSyncBlocking, "runSyncBlocking");
 
